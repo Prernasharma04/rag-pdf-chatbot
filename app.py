@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import fitz
 from dotenv import load_dotenv
@@ -7,7 +8,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
 
+# -----------------------
+# Load Environment Variables
+# -----------------------
+
 load_dotenv()
+
+groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 
 st.set_page_config(
     page_title="Chat with PDF",
@@ -27,7 +34,20 @@ def load_embeddings():
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
+# -----------------------
+# Cache Groq Model
+# -----------------------
+
+@st.cache_resource
+def load_llm():
+    return ChatGroq(
+        groq_api_key=groq_api_key,
+        model="llama-3.3-70b-versatile",
+        temperature=0
+    )
+
 embeddings = load_embeddings()
+llm = load_llm()
 
 # -----------------------
 # Session State
@@ -46,7 +66,7 @@ if "messages" not in st.session_state:
 # Sidebar
 # -----------------------
 
-st.sidebar.title("Upload PDF")
+st.sidebar.title("📄 Upload PDF")
 
 uploaded_file = st.sidebar.file_uploader(
     "Choose a PDF",
@@ -104,14 +124,12 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # -----------------------
-# Ask Question
+# Chat
 # -----------------------
 
 if st.session_state.vector_store:
 
-    question = st.chat_input(
-        "Ask anything about your PDF..."
-    )
+    question = st.chat_input("Ask anything about your PDF...")
 
     if question:
 
@@ -135,18 +153,12 @@ if st.session_state.vector_store:
             for doc in docs
         )
 
-        llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            temperature=0
-        )
-
         prompt = f"""
 You are a helpful assistant.
 
 Answer ONLY using the context below.
 
-If the answer is not found,
-reply:
+If the answer is not found, reply:
 
 I don't know.
 
