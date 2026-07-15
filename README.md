@@ -45,7 +45,7 @@ rag-pdf-chatbot/
 ├── .gitignore
 ├── .env.example
 └── data/
-
+```
 ⚙ Installation
 1. Clone the repository
 git clone [https://github.com/Prernasharma04/rag-pdf-chatbot.git](https://github.com/Prernasharma04/rag-pdf-chatbot.git)
